@@ -1,3 +1,7 @@
+//for run3 analysis(common tool)
+//Author: zhxiong
+//cern box: zhenjun.xiong@cern.ch
+
 #include <TFile.h>
 #include <TH1.h>
 #include <TList.h>
@@ -18,13 +22,14 @@ class reader
     public:
         static TList* get_trkList(TFile*, string);
         static TList* get_makerList(TFile*, string);
+        static TList* get_makerList_event(TFile*,string);
         static TList* get_pairList(TFile*, string);
+        static TList* get_pairList_mm(TFile*, string);
+        static TList* get_pairList_pp(TFile*, string);
+        static TList* get_List(TFile*, string, string, string);
         template <class HISTO>
         static HISTO* get_histo(TList* List, string histoname);
     private:
-        // THashList *HashList;
-        // TList *List;
-        // string Listname;
 };
 
 class drawer
@@ -41,8 +46,18 @@ class setter
         template <class HISTO>
         static HISTO* sethistoranger(HISTO*, double, double, double, double);
         static TH1* sethistoaxis(TH1*, string, string, double, double, double, double);
+        template <class HISTO>
+        static HISTO* standardaxis(HISTO*, string, string);
         static TH1* sethistostyle(TH1*, int, int, int, int, int, int);
     private:
+};
+
+TList* reader::get_List(TFile* file, string hashlistname, string listtitle, string cutname)
+{
+    string listname = listtitle + "_" + cutname;
+    THashList *HashList = (THashList*)file->Get(hashlistname.c_str());
+    TList *List = (TList*)HashList->FindObject(listname.c_str());
+    return List;
 };
 
 TList* reader::get_trkList(TFile *file,string cutname)
@@ -65,10 +80,40 @@ TList* reader::get_makerList(TFile *file,string cutname)
     return List;
 };
 
+TList* reader::get_makerList_event(TFile *file,string cutname)
+{
+    string HashListname_maker = "table-maker/output";
+    string Listtitle_maker = "Event_";
+    string listname = Listtitle_maker + cutname;
+    THashList *HashList = (THashList*)file->Get(HashListname_maker.c_str());
+    TList *List = (TList*)HashList->FindObject(listname.c_str());
+    return List;
+};
+
 TList* reader::get_pairList(TFile *file,string cutname)
 {
     string HashListname_pair = "analysis-same-event-pairing/output";
     string Listtitle_pair = "PairsBarrelSEPM_";
+    string listname = Listtitle_pair + cutname;
+    THashList *HashList = (THashList*)file->Get(HashListname_pair.c_str());
+    TList *List = (TList*)HashList->FindObject(listname.c_str());
+    return List;
+};
+
+TList* reader::get_pairList_mm(TFile *file,string cutname)
+{
+    string HashListname_pair = "analysis-same-event-pairing/output";
+    string Listtitle_pair = "PairsBarrelSEMM_";
+    string listname = Listtitle_pair + cutname;
+    THashList *HashList = (THashList*)file->Get(HashListname_pair.c_str());
+    TList *List = (TList*)HashList->FindObject(listname.c_str());
+    return List;
+};
+
+TList* reader::get_pairList_pp(TFile *file,string cutname)
+{
+    string HashListname_pair = "analysis-same-event-pairing/output";
+    string Listtitle_pair = "PairsBarrelSEPP_";
     string listname = Listtitle_pair + cutname;
     THashList *HashList = (THashList*)file->Get(HashListname_pair.c_str());
     TList *List = (TList*)HashList->FindObject(listname.c_str());
@@ -81,6 +126,7 @@ HISTO* reader::get_histo(TList* List, string histoname)
     HISTO *histo = (HISTO*)List->FindObject(histoname.c_str());
     return histo;
 };
+
 
 TLatex* drawer::drawLatex(double x, double y, char* text, int textFont, double textSize, int colorIndex)
 {
@@ -111,6 +157,24 @@ HISTO* setter::sethistoranger(HISTO* histo, double xmin, double xmax, double ymi
     return histo;
 };
 
+template <class HISTO>
+HISTO* setter::standardaxis(HISTO* histo, string xtitle, string ytitle)
+{
+    histo->GetXaxis()->SetTitle(xtitle.c_str());
+    histo->GetYaxis()->SetTitle(ytitle.c_str());
+    histo->GetXaxis()->SetTitleOffset(1.2);
+    histo->GetYaxis()->SetTitleOffset(1.2);
+    histo->GetXaxis()->SetTitleSize(0.06);
+    histo->GetYaxis()->SetTitleSize(0.06);
+    histo->GetXaxis()->SetLabelSize(0.055);
+    histo->GetXaxis()->SetLabelOffset(0.015);
+    histo->GetYaxis()->SetLabelSize(0.055);
+    histo->GetYaxis()->SetLabelOffset(0.015);
+    histo->SetStats(0);
+    histo->SetTitle("");
+    return histo;
+};
+
 TH1* setter::sethistoaxis(TH1* histo, string xtitle, string ytitle,double xoffset, double yoffset, double xsize, double ysize)
 {
     histo->GetXaxis()->SetTitle(xtitle.c_str());
@@ -119,9 +183,9 @@ TH1* setter::sethistoaxis(TH1* histo, string xtitle, string ytitle,double xoffse
     histo->GetYaxis()->SetTitleOffset(yoffset);
     histo->GetXaxis()->SetTitleSize(xsize);
     histo->GetYaxis()->SetTitleSize(ysize);
-    histo->GetXaxis()->SetLabelSize(0.05);
+    histo->GetXaxis()->SetLabelSize(0.055);
     histo->GetXaxis()->SetLabelOffset(0.015);
-    histo->GetYaxis()->SetLabelSize(0.05);
+    histo->GetYaxis()->SetLabelSize(0.055);
     histo->GetYaxis()->SetLabelOffset(0.015);
     return histo;
 };
